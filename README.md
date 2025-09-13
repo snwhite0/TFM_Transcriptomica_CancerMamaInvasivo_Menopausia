@@ -47,6 +47,6 @@ Analizar la expresión diferencial por estado menopáusico en cada subtipo molec
 ## Estructura del repositorio
 ├── scripts/ # Scripts de R por tipo de análisis
 
-├── data/ # Datos de entrada
+├── data/ # Datos de entrada (raw data)
 
 ├── README.md # Este archivo
