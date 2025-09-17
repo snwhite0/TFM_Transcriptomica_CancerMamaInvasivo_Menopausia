@@ -1,6 +1,6 @@
 ### Análisis de Expresión Diferencial (DEA)
 
-## PREPARACIÓN PREVIA 
+## Configuración inicial 
 # Garantizar el filtrado y orden correcto de los datos de interés
 muestras_comunes = intersect(colnames(dge_tumor_filtrado_norm), pca_df_tumor$sample_id) 
 dge_tumor_filtrado_norm_2 = dge_tumor_filtrado_norm[, muestras_comunes]
