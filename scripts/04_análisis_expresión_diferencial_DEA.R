@@ -1,45 +1,39 @@
-# 4.1. Garantizar el filtrado y orden correcto de los datos de interés
-# Filtrar las muestras comunes entre matriz de conteo ('dge_tumor_filtrado_norm') y metadatos ('pca_df_tumor')
-muestras_comunes = intersect(colnames(dge_tumor_filtrado_norm), pca_df_tumor$sample_id) 
+### Análisis de Expresión Diferencial (DEA)
+## PREPARACIÓN PREVIA 
 
+# Garantizar el filtrado y orden correcto de los datos de interés
+muestras_comunes = intersect(colnames(dge_tumor_filtrado_norm), pca_df_tumor$sample_id) 
 dge_tumor_filtrado_norm_2 = dge_tumor_filtrado_norm[, muestras_comunes]
 pca_df_tumor_filtrado = pca_df_tumor[pca_df_tumor$sample_id %in% muestras_comunes, ]
-
 stopifnot(all(colnames(dge_tumor_filtrado_norm_2) == pca_df_tumor_filtrado$sample_id))
 
 cat("Dimensión de la matriz de conteos preprocesada: ", dim(dge_tumor_filtrado_norm), "\n")
 cat("Dimensión de la matriz de conteos preprocesada filtrada: ", dim(dge_tumor_filtrado_norm_2), "\n")
-
 cat("Dimensión de la tabla de metadatos: ", dim(pca_df_tumor), "\n")
 cat("Dimensión de la tabla de metadatos filtrados: ", dim(pca_df_tumor_filtrado), "\n")
 
-# 4.2. Renombrar variables para mayor claridad
+# Renombrar variables para mayor claridad y guardar en archivos CSV
 dge = dge_tumor_filtrado_norm_2
 metadatos = pca_df_tumor_filtrado
 
-# Guardar en CSV
 output_dir = "../datos/procesados/"
 if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
-
 write.csv(dge, file.path(output_dir, "dge"), row.names = FALSE)
 cat(sprintf("Archivo 'dge' guardado en: %s\n", output_dir))
-
 write.csv(metadatos, file.path(output_dir, "metadatos"), row.names = FALSE)
 cat(sprintf("Archivo 'metadatos' guardado en: %s\n", output_dir))
 
-# 4.3 Limpieza de factores y definir de los niveles posibles
+# Limpieza de factores y definición de los niveles posibles
 metadatos$MENOPAUSE_STATUS = as.factor(trimws(metadatos$MENOPAUSE_STATUS))
 metadatos$SUBTYPE = as.factor(trimws(metadatos$SUBTYPE))
-
 metadatos$MENOPAUSE_STATUS = factor(trimws(metadatos$MENOPAUSE_STATUS),
                                     levels = c("Premenopausia", "Perimenopausia", "Postmenopausia"))
 metadatos$SUBTYPE = factor(trimws(metadatos$SUBTYPE),
                            levels = c("BRCA_Basal", "BRCA_Her2", "BRCA_LumA", "BRCA_LumB", "BRCA_Normal"))
 
-# 4.4. Verificar la distribución de los datos
+# Verificar la distribución de los datos
 cat("VERIFICACION DE LA DISTRIBUCIÓN DE LAS MUESTRAS:"); print(table(metadatos$MENOPAUSE_STATUS)); print(table(metadatos$SUBTYPE))
 
-cat("¡Todo preparado para realizar los DEAs!\n")
 
 # DEA para alcanzar el Objetivo 1
 
