@@ -1,7 +1,6 @@
-# 10. Análisis de Supervivencia para OBJ1
-# 10.1.1 Configuración inicial
+### Análisis de Supervivencia
 
-# Crear directorio principal para guardar los resultados
+## Configuración inicial
 outdir_supervivencia = "../resultados/10.Analisis_Supervivencia/obj1"
 dir.create(outdir_supervivencia, recursive = TRUE, showWarnings = FALSE)
 
@@ -31,7 +30,7 @@ supervivencias = list(
 genes_listado = obtener_genes_boxplots(ruta_boxplots_obj1)
 genes_a_analizar_superv_obj1 = unique(unlist(genes_listado))
 
-# 10.1.2 Función de análisis de supervivencia Kaplan-Meier por mediana
+# Generar función de análisis de supervivencia Kaplan-Meier por mediana
 analisis_supervivencia = function(df, time_col, event_col, gen_expr_col, tipo, carpeta, subtitulo="") {
   dir.create(carpeta, recursive = TRUE, showWarnings = FALSE)
   
@@ -83,7 +82,8 @@ analisis_supervivencia = function(df, time_col, event_col, gen_expr_col, tipo, c
   ))
 }
 
-# 10.1.3 Ejecución del análisis para todos los DEGs de Obj1
+
+## Ejecución deL análisis de supervivencia para los resultados significativos del Objetivo 1
 resumen_final_obj1 = list()
 
 # Iterar sobre cada gen significativo
@@ -131,7 +131,7 @@ for (gen in genes_a_analizar_superv_obj1) {
 cat("¡Listo! Análisis de Supervivencia completado para los DEGs significativos del objetivo 1.\n")
 cat("Los resultados están guardados en subcarpetas dentro de:\n", outdir_supervivencia, "\n")
 
-# 10. Análisis de Supervivencia para OBJ2
+## Ejecución deL análisis de supervivencia para los resultados significativos del Objetivo 1
 # 10.2.1 Configuración inicial
 
 # Crear directorio principal para guardar los resultados
