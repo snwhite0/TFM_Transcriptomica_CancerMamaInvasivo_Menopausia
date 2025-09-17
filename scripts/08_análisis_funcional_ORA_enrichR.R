@@ -1,5 +1,8 @@
-# 9.1. Configuración inicial del análisis funcional de DEGs
-# Crear directorio principal para guardar los resultados
+### Análisis de Enriquecimiento Funcional (ORA) con EnrichR
+# El análisis se aplica únicamente a los grupos de DEGs que han superado los filtros de significancia del test de Kruskal-Wallis, 
+es decir, aquellos para los que se han generado boxplots.
+
+## Configuración inicial del análisis funcional de DEGs
 dir_analisis_funcional = file.path("..", "resultados", "9.Analisis_Funcional_DEGs")
 dir.create(dir_analisis_funcional, recursive = TRUE, showWarnings = FALSE)
 
@@ -11,7 +14,7 @@ ruta_boxplots_obj2 = "~/Documentos/TFM_Sarasua_Naia/resultados/8.Significancia_D
 min_genes_ora = 1   # Número mínimo de DEGs requeridos para ejecutar el ORA
 top_n = 3           # Número máximo de términos significativos a mostrar en los bubbleplots
 
-# 9.2. Función para extraer listas de genes a partir de subcarpetas con boxplots
+# Generar función para extraer listas de genes a partir de subcarpetas con boxplots
 #    - Busca archivos PDF de boxplots en cada subcarpeta
 #    - Extrae los identificadores de genes a partir de los nombres de archivo
 #    - Devuelve una lista nombrada con los genes por subcarpeta
@@ -34,7 +37,7 @@ obtener_genes_boxplots = function(ruta_boxplots) {
   return(lista_genes)
 }
 
-# 9.3. Función para crear y guardar bubbleplots
+# Generar función para crear y guardar bubbleplots
 #    - Lee resultados de ORA desde un archivo CSV
 #    - Filtra términos con p < 0.05
 #    - Selecciona los top N términos más significativos
@@ -68,7 +71,7 @@ crear_y_guardar_bubble_plot = function(csv_file, top_n = 3, guardar = FALSE, out
   return(p)
 }
 
-# 9.4. Función para ejecutar ORA con Enrichr
+# Generar función para ejecutar ORA con Enrichr
 #    - Recibe una lista de genes y bases de datos de referencia (GO, KEGG, etc.)
 #    - Filtra términos con p < 0.05
 #    - Estandariza nombres de columnas para evitar errores (term_name, p_value, intersection, etc.)
@@ -108,7 +111,7 @@ ejec_enrichr_ora = function(gene_list,
   
   todos_resultados = data.frame()
   
-  db_nombres_cortos = c( # Diccionario con nombres más claros y concisos
+  db_nombres_cortos = c(   # Diccionario con nombres más claros y concisos para los bubbleplots
     "GO_Biological_Process_2025"   = "BP",
     "GO_Molecular_Function_2025"   = "MF",
     "GO_Cellular_Component_2025"   = "CC",
@@ -138,7 +141,6 @@ ejec_enrichr_ora = function(gene_list,
     if ("Genes" %in% colnames(res_df)) names(res_df)[names(res_df) == "Genes"] = "intersection"
     res_df$source = db_nombres_cortos[[db]]
 
-    
     if ("intersection" %in% colnames(res_df)) {
       res_df$intersection_size = sapply(strsplit(res_df$intersection, ";"), length)
     }
@@ -174,13 +176,10 @@ ejec_enrichr_ora = function(gene_list,
   ggsave(archivo_plot, plot = p, width = 10, height = 6)
   
   return(p)
-}
-                            
-cat("¡Todo preparado para realizar el análisis funcional!\n")
+}                            
 
-# 9.5. Ejecución del análisis de sobre-representación (ORA)
 
-# ORA para OBJETIVO 1
+## Ejecución del para los resultados significativos del Objetivo 1
 # - Se extraen los genes asociados a cada subcarpeta de boxplots
 # - Para cada lista de genes con tamaño >= min_genes_ora:
 #       · Se prepara un nombre corto de análisis
@@ -205,7 +204,8 @@ for (nombre_lista in names(lista_genes_obj1)) {
   }
 }
 
-# ORA para OBJETIVO 2
+
+## Ejecución del para los resultados significativos del Objetivo 2
 # - Proceso equivalente al de Obj1, pero aplicado a las listas de genes obtenidas de los boxplots de Obj2
 
 lista_genes_obj2 = obtener_genes_boxplots(ruta_boxplots_obj2)
@@ -225,6 +225,3 @@ for (nombre_lista in names(lista_genes_obj2)) {
     )
   }
 }
-
-cat("¡Análisis funcional completado para todos los DEGs significativos (boxplots generados) según el test no paramétrico de Kruskal-Wallis!\n")
-cat("Resultados guardados en:\n", dir_analisis_funcional, "\n")
