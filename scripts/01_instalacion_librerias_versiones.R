@@ -1,16 +1,14 @@
-### Instalación de librerías/paquetes
-# Paquetes CRAN
-paquetes_cran = c("data.table", "tidyverse", "viridis", "ggrepel","UpSetR", "pheatmap", "RColorBrewer", "enrichR", "survival")
-# Paquetes Bioconductor
-paquetes_bioc = c("edgeR", "limma", "topGO", "AnnotationDbi", "org.Hs.eg.db", "GO.db", "Rgraphviz", "dorothea", "viper")
+### Preparación de librerías y paquetes
 
-# Función para instalar paquetes CRAN si faltan
+## Configuración inicial
+# Crear función para instalar paquetes CRAN si faltan
 instalar_si_falta = function(libreria) {
   if (!requireNamespace(libreria, quietly = TRUE)) {
     install.packages(libreria)
   }
 }
-# Función para instalar paquetes Bioconductor si faltan
+
+# Crear función para instalar paquetes Bioconductor si faltan
 instalar_bioconductor_si_falta = function(libreria) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
     install.packages("BiocManager")
@@ -19,6 +17,11 @@ instalar_bioconductor_si_falta = function(libreria) {
     BiocManager::install(libreria, update = FALSE, ask = FALSE)
   }
 }
+
+
+## Ejecutar instalación y carga de librerías y paquetes necesarios
+paquetes_cran = c("data.table", "tidyverse", "viridis", "ggrepel","UpSetR", "pheatmap", "RColorBrewer", "enrichR", "survival")   # Paquetes CRAN
+paquetes_bioc = c("edgeR", "limma", "topGO", "AnnotationDbi", "org.Hs.eg.db", "GO.db", "Rgraphviz", "dorothea", "viper")         # Paquetes Bioconductor
 
 # Instalar paquetes si faltan
 invisible(sapply(paquetes_cran, instalar_si_falta))
@@ -34,7 +37,8 @@ suppressPackageStartupMessages({
   })
 })
 
-### Registro de versiones de paquetes y librerías instalados
+
+## Registro de versiones de paquetes y librerías instalados
 # Función para obtener versiones y origen
 info_paquetes = function(lista, origen) {
   data.frame(
