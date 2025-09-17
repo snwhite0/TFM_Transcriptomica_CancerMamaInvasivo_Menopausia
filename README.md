@@ -46,6 +46,9 @@ Analizar la expresión diferencial por estado menopáusico en cada subtipo molec
 
 ## Estructura del repositorio
 ├── TFM_script_definitivo.html # Archivo HTML con el código completo
+
 ├── scripts/ # Scripts de R por tipo de análisis
+
 ├── data/ # Datos de entrada (raw data)
+
 ├── README.md # Este archivo
