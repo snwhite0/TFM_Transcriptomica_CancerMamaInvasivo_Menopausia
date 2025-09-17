@@ -1,4 +1,9 @@
-# 8.1. Configuración inicial
+### Test estadístico no-paramétrico Kruskal-Wallis
+
+## Configuración inicial
+dir_boxplots = file.path("..", "resultados", "8.Significancia_DEGs", "boxplots")
+dir.create(dir_boxplots, recursive = TRUE, showWarnings = FALSE)
+
 # Inicializar un data.frame vacío para almacenar los resultados del test estadístico
 all_kruskal_results = data.frame(
   Gene = character(),
@@ -12,12 +17,7 @@ all_kruskal_results = data.frame(
   stringsAsFactors = FALSE
 )
 
-# Definir directorio de salida para guardar boxplots
-dir_boxplots = file.path("..", "resultados", "8.Significancia_DEGs", "boxplots")
-dir.create(dir_boxplots, recursive = TRUE, showWarnings = FALSE)
-
-
-# 8.2. Función para crear y guardar boxplots
+# Generar función para crear y guardar box plots de DEGs significativos según el umbral de p-valor establecido
 crear_y_guardar_box_plot = function(gen_id, expresion_matrix, metadatos_df,
                                          ruta_salida_dir,
                                          p_threshold = 0.05,
@@ -200,13 +200,12 @@ crear_y_guardar_box_plot = function(gen_id, expresion_matrix, metadatos_df,
   }
 }
 
-cat("¡Todo preparado para generar los boxplots!")
 
-# Análisis estadístico Kruskal-Wallis para Obj1
-# 8.3.1. Análisis estadístico Kruskal Wallis en contrastes individuales (7.3.1)
+## Aplicar análisis estadístico Kruskal-Wallis para los resultados del DEA del Obj1
 ruta_base_contr_indiv_obj1 = file.path(dir_boxplots, "obj1", "contrastes_indiv")
 dir.create(ruta_base_contr_indiv_obj1, recursive = TRUE, showWarnings = FALSE)
 
+# A. APLICAR A LOS DEGs RESULTANTES DE CADA CONTRASTE INDIVIDUAL
 for (nombre_contraste in names(ids_genes_significativos_obj1)) {
   
   # Crear directorio de salida para este contraste
@@ -236,7 +235,7 @@ for (nombre_contraste in names(ids_genes_significativos_obj1)) {
       }
     }
   
-    # Guardar resultados estadísticos para este contraste
+    # Guardar resultados estadísticos para el contraste dado
     results_for_this_context = all_kruskal_results %>%
       filter(Context == paste0("Obj1_ContrasteIndiv_", nombre_contraste))
 
@@ -253,7 +252,7 @@ for (nombre_contraste in names(ids_genes_significativos_obj1)) {
   }
 }
 
-# 8.3.2. Análisis estadístico Kruskal-Wallis en DEGs comunes entre N contrastes (7.3.2)
+# B. APLICAR A LOS DEGs COMUNES ENTRE N CONTRASTES
 ruta_base_comunes_inter_N_contr_obj1 = file.path(dir_boxplots, "obj1", "comunes_inter_N_contrasts")
 dir.create(ruta_base_comunes_inter_N_contr_obj1, recursive = TRUE, showWarnings = FALSE)
 
@@ -321,10 +320,8 @@ if (num_obj1_contrasts < min_contrasts_for_intersection) {
   }
 }
 
-cat("¡Listo! Boxplots del DEA Obj1 generados con éxito.\n")
 
-# Análisis estadístico Kruskal-Wallis para Obj2
-# Directorio raíz para guardar boxplots del Obj2
+## Aplicar análisis estadístico Kruskal-Wallis para los resultados del DEA del Obj2
 dir_individuales_bp = file.path(dir_boxplots, "obj2")
 dir.create(dir_individuales_bp, showWarnings = FALSE)
 
@@ -332,14 +329,12 @@ dir.create(dir_individuales_bp, showWarnings = FALSE)
 for (subtipo in target_subtypes) {
   cat("Generando boxplots para el subtipo:", subtipo, "...\n")
   
-  # Crear directorio para este subtipo
+  # Crear directorio para el subtipo dado
   dir_subtipo_bp = file.path(dir_individuales_bp, subtipo)
   dir.create(dir_subtipo_bp, showWarnings = FALSE, recursive = TRUE)
 
-  # 8.4.1. Análisis estadístico Kruskal-Wallis para DEGs de contrastes individuales por subtipo (7.4.1)
-  
-  # Seleccionar contrastes que pertenecen a este subtipo
-  contrastes_subtipo = grep(paste0("^", subtipo, "_"), names(ids_genes_significativos_obj2), value = TRUE)
+  # C. APLICAR A LOS DEGs RESULTANTES DE CADA CONTRASTE POR SUBTIPO
+  contrastes_subtipo = grep(paste0("^", subtipo, "_"), names(ids_genes_significativos_obj2), value = TRUE) # Seleccionar contrastes que pertenecen a un subtipo dado
   
   for (nombre_contraste in contrastes_subtipo) {
     genes = ids_genes_significativos_obj2[[nombre_contraste]]
@@ -347,12 +342,12 @@ for (subtipo in target_subtypes) {
       cat("  No hay DEGs para el contraste", nombre_contraste, ". Omitiendo\n")
       next
     }
-  
-    # Directorio específico para este contraste
+
+    # Directorio de salida
     ruta_salida_bp_contraste = file.path(dir_subtipo_bp, gsub("_", "-", nombre_contraste))
     dir.create(ruta_salida_bp_contraste, recursive = TRUE, showWarnings = FALSE)
-  
-    # Generar boxplots para cada gen significativo
+
+    # Generar boxplots
     for (gen_id in genes) {
       p_plot = crear_y_guardar_box_plot(
         gen_id = gen_id,
@@ -371,8 +366,8 @@ for (subtipo in target_subtypes) {
         cat("\n")
       }
     }
-    
-    # Guardar resultados estadísticos de este contraste
+
+    # Guardar resultados estadísticos
     context_filter_string = paste0("Obj2_ContrasteIndividual_", nombre_contraste)
     results_for_this_context = all_kruskal_results %>% filter(Context == context_filter_string)
 
@@ -386,9 +381,8 @@ for (subtipo in target_subtypes) {
     }
   }
 
-   # 8.4.2. Análisis estadístico Kruskal-Wallis para DEGs comunes entre los tres contrastes del mismo subtipo (7.4.2)
-  
-  # Lista de genes por contraste (filtrando vacíos)
+  # D. APLICAR A LOS DEGs COMUNES ENTRE N CONTRASTES DEL MISMO SUBTIPO  
+  # Guardar lista de genes por contraste filtrando vacíos
   genes_list = lapply(contrastes_subtipo, function(x) ids_genes_significativos_obj2[[x]])
   genes_list = Filter(function(x) !is.null(x) && length(x) > 0, genes_list)
 
@@ -404,7 +398,7 @@ for (subtipo in target_subtypes) {
     combos = combn(contrastes_subtipo, n, simplify = FALSE)
     for (combo in combos) {
       
-      # Genes comunes en esta combinación de contrastes
+      # Genes comunes en una combinación dada de contrastes
       genes_comunes_combo = Reduce(intersect, lapply(combo, function(x) ids_genes_significativos_obj2[[x]]))
       
       if (length(genes_comunes_combo) == 0) {
@@ -412,10 +406,11 @@ for (subtipo in target_subtypes) {
       } else {
         cat("    Encontrados", length(genes_comunes_combo), "genes comunes para la combinación:", paste(combo, collapse = " & "), "\n")
         
-        # Directorio de salida para esta combinación
+        # Directorio de salida
         ruta_salida_bp_comunes_combo = file.path(dir_subtipo_bp, paste0("genes_comunes_", paste(combo, collapse = "_")))
         dir.create(ruta_salida_bp_comunes_combo, recursive = TRUE, showWarnings = FALSE)
-        # Generar boxplots para los genes comunes
+        
+        # Generar boxplots
         for (gen_id in genes_comunes_combo) {
           p_plot = crear_y_guardar_box_plot(
             gen_id = gen_id,
@@ -435,7 +430,7 @@ for (subtipo in target_subtypes) {
           }
         }
 
-        # Guardar resultados estadísticos de la combinación
+        # Guardar resultados estadísticos
         context_filter_string = paste0("Obj2_IntraSubtipo_Comunes_", subtipo, "_combo")
         results_for_this_context = all_kruskal_results %>% filter(Context == context_filter_string)
         
@@ -452,7 +447,3 @@ for (subtipo in target_subtypes) {
     }
   }
 }
-
-cat("¡Listo! Boxplots del DEA Obj2 generados con éxito.\n")
-cat("Todos los boxplots están guardados en:\n", dir_boxplots, "\n")
-                                                     
