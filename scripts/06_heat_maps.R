@@ -1,19 +1,19 @@
-# 7.1. Configuración inicial
+### Heat Maps
+
+## Configuración inicial
 hm_dir = "../resultados/7.Perfiles_Expresion_DEGs/heat_maps"
 dir_obj1 = file.path(hm_dir, "obj1")
 dir_obj2 = file.path(hm_dir, "obj2")
-
 dir.create(hm_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(dir_obj1, showWarnings = FALSE, recursive = TRUE)
 dir.create(dir_obj2, showWarnings = FALSE, recursive = TRUE)
 
-## Normalizar datos de expresión (log-CPM)
+# Normalizar datos de expresión (log-CPM) y guardar en archivos CSV
 logCPM_obj1 = cpm(dge_obj1, log = TRUE)
 logCPM_obj2 = cpm(dge_obj2, log = TRUE)
 
 write.csv(logCPM_obj1, file.path(output_dir, "logCPM_obj1"), row.names = FALSE)
 cat(sprintf("Archivo 'logCPM_obj1' guardado en: %s\n", output_dir))
-
 write.csv(logCPM_obj2, file.path(output_dir, "logCPM_obj2"), row.names = FALSE)
 cat(sprintf("Archivo 'logCPM_obj2' guardado en: %s\n", output_dir))
 
@@ -36,40 +36,32 @@ cols_anno = list(
 metadatos_obj1$SUBTYPE = gsub("BRCA_", "", metadatos_obj1$SUBTYPE)
 metadatos_obj2$SUBTYPE = gsub("BRCA_", "", metadatos_obj2$SUBTYPE)
 
-# 7.2. Función principal para generar los heatmaps
+# Generar función principal para crear los heat maps
 crear_y_guardar_heat_maps = function(genes, matriz_expr, metadatos, titulo, ruta_salida,
                                    anotaciones_a_incluir = c("MENOPAUSE_STATUS"), ## Eliminar 'SUBTYPE' para obj1
                                    cols_anno, cluster_cols = FALSE) {
   
-  # Filtrar los genes presentes en la matriz de expresión
-  genes_presentes = genes[genes %in% rownames(matriz_expr)]
+  genes_presentes = genes[genes %in% rownames(matriz_expr)]   # Filtrar los genes presentes en la matriz de expresión
   if (length(genes_presentes) == 0) {
     cat("AVISO (", titulo, "): No hay genes presentes en la matriz de expresión. Omitiendo heatmap.\n")
     return(NULL)
   }
   
-  # Extraer la expresión de los genes filtrados y manejar NAs
-  expresion = matriz_expr[genes_presentes, , drop = FALSE]
-  
-  # Manejar NAs y asegurar que 'expresion' sigue siendo una matriz
-  expresion_filtrada_na = expresion[complete.cases(expresion), , drop = FALSE]
-
+  expresion = matriz_expr[genes_presentes, , drop = FALSE]   # Extraer la expresión de los genes filtrados y manejar NAs
+  expresion_filtrada_na = expresion[complete.cases(expresion), , drop = FALSE]   # Manejar NAs y asegurar que 'expresion' sigue siendo una matriz
   if (NROW(expresion_filtrada_na) == 0) {
     cat("AVISO (", titulo, "): Después de manejar NAs, no quedan genes válidos. Omitiendo heatmap.\n")
     return(NULL)
   }
   expresion = expresion_filtrada_na 
 
-  # Alinear las muestras entre la expresión y los metadatos
-  muestras_comunes = intersect(colnames(expresion), metadatos$sample_id)
-  
+  muestras_comunes = intersect(colnames(expresion), metadatos$sample_id)   # Alinear las muestras entre la expresión y los metadatos
   if (length(muestras_comunes) == 0) {
     cat("AVISO (", titulo, "): No hay muestras comunes entre la matriz de expresión y los metadatos. Omitiendo heatmap.\n")
     return(NULL)
   }
   
   expresion = expresion[, muestras_comunes, drop = FALSE]
-  
   if (NROW(expresion) < 2) {
     cat("AVISO (", titulo, "): Menos de 2 genes para clusterizar (N = ", NROW(expresion), "). Omitiendo clustering de filas y heatmap.\n")
     cluster_rows_final = FALSE # Desactivar el clustering de filas
@@ -78,25 +70,22 @@ crear_y_guardar_heat_maps = function(genes, matriz_expr, metadatos, titulo, ruta
     cluster_rows_final = TRUE
     show_rows = NROW(expresion) < 100 # Decide si mostrar los nombres de los genes según la cantidad total de DEGs para el heatmap
   }
-
+  
   if (cluster_cols && NCOL(expresion) < 2) {
     cat("AVISO (", titulo, "): 'cluster_cols' es TRUE pero menos de 2 muestras para clusterizar columnas (N = ", NCOL(expresion), "). Desactivando clustering de columnas.\n")
     cluster_cols = FALSE # Se fuerza a FALSE si no hay suficientes columnas
   }
 
-  # Preparar el dataframe de anotación para las columnas del heatmap
-  ann = metadatos[match(muestras_comunes, metadatos$sample_id), ]
+  ann = metadatos[match(muestras_comunes, metadatos$sample_id), ]   # Preparar el dataframe de anotación para las columnas del heatmap
   rownames(ann) = ann$sample_id
-  
   anotaciones_presentes = anotaciones_a_incluir[anotaciones_a_incluir %in% colnames(ann)]
   if (length(anotaciones_presentes) == 0) {
     cat("AVISO (", titulo, "): Ninguna columna de anotación especificada fue encontrada. El heatmap se generará sin anotaciones de columna.\n")
     ann = NA 
   } else {
     ann = ann[, anotaciones_presentes, drop = FALSE]
-    
-    # Asegurar que 'ann' es un data.frame si se reduce a una sola columna/fila para evitar problemas de ordenamiento
-    if(is.vector(ann) && ncol(expresion) > 1) { 
+
+    if(is.vector(ann) && ncol(expresion) > 1) {  # Asegurar que 'ann' es un data.frame si se reduce a una sola columna/fila para evitar problemas de ordenamiento
         ann_df = data.frame(ann)
         colnames(ann_df) = anotaciones_presentes
         ann = ann_df
@@ -104,20 +93,17 @@ crear_y_guardar_heat_maps = function(genes, matriz_expr, metadatos, titulo, ruta
         ann = as.data.frame(ann)
     }
 
-    # Ordenar las muestras por estado menopáusico si la columna existe
-    if ("MENOPAUSE_STATUS" %in% colnames(ann)) {
+    if ("MENOPAUSE_STATUS" %in% colnames(ann)) { # Ordenar las muestras por estado menopáusico si la columna existe
       orden_menopausia = names(cols_anno$MENOPAUSE_STATUS) # Usar el orden de la leyenda
       ann$MENOPAUSE_STATUS = factor(as.character(ann$MENOPAUSE_STATUS), levels = orden_menopausia)
     }
 
-    # Ordenar las muestras por subtipo si la columna existe
-    if ("SUBTYPE" %in% colnames(ann)) {
+    if ("SUBTYPE" %in% colnames(ann)) {  # Ordenar las muestras por subtipo si la columna existe
       orden_subtipo = names(cols_anno$SUBTYPE) # Usar el orden de la leyenda
       ann$SUBTYPE = factor(as.character(ann$SUBTYPE), levels = orden_subtipo)
     }
 
-    # Ordenar el dataframe de anotación completo. Ordenamos por SUBTYPE primero, luego por MENOPAUSE_STATUS.
-    if ("SUBTYPE" %in% colnames(ann) && "MENOPAUSE_STATUS" %in% colnames(ann)) {
+    if ("SUBTYPE" %in% colnames(ann) && "MENOPAUSE_STATUS" %in% colnames(ann)) { # Ordenar el dataframe de anotación completo. Por SUBTYPE primero, luego por MENOPAUSE_STATUS.
         ann = ann[order(ann$SUBTYPE, ann$MENOPAUSE_STATUS), , drop = FALSE]
     } else if ("SUBTYPE" %in% colnames(ann)) {
         ann = ann[order(ann$SUBTYPE), , drop = FALSE]
@@ -125,12 +111,10 @@ crear_y_guardar_heat_maps = function(genes, matriz_expr, metadatos, titulo, ruta
         ann = ann[order(ann$MENOPAUSE_STATUS), , drop = FALSE]
     }
     
-    # Reordenar la matriz de expresión para que coincida con el orden de las anotaciones
-    expresion = expresion[, rownames(ann), drop = FALSE] 
+    expresion = expresion[, rownames(ann), drop = FALSE]  # Reordenar la matriz de expresión para que coincida con el orden de las anotaciones
 }
   
-    # Guardar el heatmap en un archivo
-    hm = pheatmap(expresion, scale = "row",
+    hm = pheatmap(expresion, scale = "row", # Diseñar el heat map
          cluster_rows = cluster_rows_final, 
          cluster_cols = cluster_cols,       
          show_rownames = show_rows, 
@@ -147,10 +131,9 @@ crear_y_guardar_heat_maps = function(genes, matriz_expr, metadatos, titulo, ruta
   })
 }
 
-cat("¡Todo preparado para generar los heatmaps!")
 
-# Heat maps Objetivo 1
-# 7.3.1. Heatmap individual para cada contraste
+## Ejecutar función para crear heat maps para los resultados del DEA del Objetivo 1
+# Heat map individual para cada contraste
 ruta_contrastes_obj1_dir = file.path(dir_obj1, "contrastes_indiv")
 dir.create(ruta_contrastes_obj1_dir, recursive = TRUE, showWarnings = FALSE)
 
@@ -168,7 +151,7 @@ for (nombre_contraste in names(ids_genes_significativos_obj1)) {
   }
 }
 
-# 7.3.2. Heatmaps para DEGs comunes entre N contrastes (N >= 2)
+# Heat maps para DEGs comunes entre N contrastes (N >= 2)
 genes_comunes_a_todos_los_3_contrastes = Reduce(intersect, ids_genes_significativos_obj1)
 all_obj1_contrasts_names = names(ids_genes_significativos_obj1)
 
@@ -208,17 +191,15 @@ if (num_obj1_contrasts < min_contrasts_for_intersection) {
   }
 }
 
-cat("¡Listo! Heatmaps del DEA Obj1 generados con éxito.\n")
 
-# Heat maps Objetivo 2
-
+## Ejecutar función para crear heat maps para los resultados del DEA del Objetivo 2
 for (subtipo in target_subtypes) {
   cat("Generando heatmaps para el subtipo", subtipo, "...\n")
 
   dir_subtipo = file.path(dir_obj2, subtipo)
   dir.create(dir_subtipo, showWarnings = FALSE, recursive = TRUE)
 
-  # 7.4.1 Heatmaps por contraste individual
+  # Heat maps para cada contraste individual de cada subtipo
   contrastes_subtipo = grep(paste0("^", subtipo, "_"), names(ids_genes_significativos_obj2), value = TRUE)
 
   for (nombre_contraste in contrastes_subtipo) {
@@ -241,7 +222,7 @@ for (subtipo in target_subtypes) {
     )
   }
   
-  # 7.4.2. Heatmaps de DEGs comunes entre combinaciones de contrastes del subtipo
+  # Heat maps para DEGs comunes entre N contrastes (N >= 2) de un subtipo dado
   genes_list = lapply(contrastes_subtipo, function(x) ids_genes_significativos_obj2[[x]])
   names(genes_list) = contrastes_subtipo
   genes_list = Filter(function(x) !is.null(x) && length(x) > 0, genes_list)
@@ -282,15 +263,10 @@ for (subtipo in target_subtypes) {
 
 }
 
-cat("¡Listo! Heatmaps del DEA Obj2 generados con éxito.\n")
-cat("Todos los heatmaps están guardados en:\n", hm_dir, "\n")
-
-
-# 7.4.3. Calcular y guardar los DEGs comunes entre contrastes para cada subtipo en CSV
+# Determinar y guardar los DEGs comunes entre contrastes para cada subtipo en un archivo CSV
 genes_dir = file.path(dir_obj2, "genes_comunes_listas")
 dir.create(genes_dir, showWarnings = FALSE, recursive = TRUE)
 
-# Iterar sobre los subtipos
 for (subtipo in target_subtypes) {
   contrastes_subtipo = grep(paste0("^", subtipo, "_"), names(ids_genes_significativos_obj2), value = TRUE)
 
@@ -315,7 +291,4 @@ for (subtipo in target_subtypes) {
   } else {
     cat("⚠ No hay suficientes contrastes con DEGs para generar combinaciones en", subtipo, "\n")
   }
-}
-
-cat("Se han guardado las listas de DEGs comunes por subtipo en:", genes_dir, "\n")
-                      
+}                   
