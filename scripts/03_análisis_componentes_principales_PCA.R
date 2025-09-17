@@ -34,8 +34,6 @@ pca_df_tumor = pca_df_tumor %>%
     SUBTYPE != ""
   )
 
-cat("Dimensión del data.frame para PCA: ", dim(pca_df_tumor), "\n")
-
 # Función para generar y guardar PCA plot 
 resultados_dir = "../resultados/3.Analisis_Exploratorio/"
 pca_plots_dir = file.path(resultados_dir, "pca_plots")
