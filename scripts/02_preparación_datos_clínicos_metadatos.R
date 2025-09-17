@@ -1,10 +1,11 @@
-# 1.1. Cargar archivos
+### Preparación de datos clínicos/metadatos
+# Carga de archivos
 tcga2018_clinicos_pacientes = data.table::fread("~/Documentos/TFM_Sarasua_Naia/datos/crudos/brca_tcga_pan_can_atlas_2018/data_clinical_patient.txt", skip=4)
 tcga2018_clinicos_muestras = data.table::fread("~/Documentos/TFM_Sarasua_Naia/datos/crudos/brca_tcga_pan_can_atlas_2018/data_clinical_sample.txt", skip=4)
 tcga2015_clinicos_pacientes = data.table::fread("~/Documentos/TFM_Sarasua_Naia/datos/crudos/brca_tcga_pub2015/data_clinical_patient.txt", skip=4)
 tcga2015_clinicos_muestras = data.table::fread("~/Documentos/TFM_Sarasua_Naia/datos/crudos/brca_tcga_pub2015/data_clinical_sample.txt", skip=4)
 
-# 1.2. Combinar datos
+# Combinación de metadatos de ambos consorcios
 tcga2018_todos_clinicos = merge(tcga2018_clinicos_muestras, tcga2018_clinicos_pacientes, by = "PATIENT_ID", all = TRUE)
 cat("Dimensión de la tabla de datos clínicos/metadatos INICIAL:", dim(tcga2018_todos_clinicos), "\n\n")
 
@@ -17,12 +18,12 @@ datos = merge(tcga2015_clinicos_muestras[, c("PATIENT_ID","ER_STATUS_BY_IHC","ER
               datos,
               by = "PATIENT_ID", all = FALSE)
 
-# 1.3. Seleccionar variables (columnas) de interés para el estudio
-#nombres_con_indices = paste0(colnames(datos), " [", 1:ncol(datos), "]")
-#print(nombres_con_indices)
+# Selección de variables de interés para el estudio
+nombres_con_indices = paste0(colnames(datos), " [", 1:ncol(datos), "]")
+print(nombres_con_indices)
 datos = datos[, c(1,2,3,4,5,6,7,8,9,10,12,27,30,31,32,37,51,55,56,57,58,59,60,61,62)] 
 
-# 1.4. Asignar a las filas vacías para la variable 'MENOPAUSE_STATUS' valores basándose en la edad
+# Completar valores faltantes de 'MENOPAUSE_STATUS' basándose en la edad
 valores_distintos_menopause_antes = table(datos$MENOPAUSE_STATUS)
 datos$MENOPAUSE_STATUS[datos$MENOPAUSE_STATUS == "[Not Available]"] = NA
 datos$MENOPAUSE_STATUS[datos$MENOPAUSE_STATUS == "Indeterminate (neither Pre or Postmenopausal)"] = NA
@@ -52,22 +53,18 @@ datos$MENOPAUSE_STATUS[datos$MENOPAUSE_STATUS == "Pre (<6 months since LMP AND n
 datos$MENOPAUSE_STATUS[datos$MENOPAUSE_STATUS == "Peri (6-12 months since last menstrual period)"] = "Perimenopausia"
 datos$MENOPAUSE_STATUS[datos$MENOPAUSE_STATUS == "Post (prior bilateral ovariectomy OR >12 mo since LMP with no prior hysterectomy)"] = "Postmenopausia"
 
-# 1.5. Agrupar valores de la variable 'AJCC_PATHOLOGIC_TUMOR_STAGE'
+# Agrupar valores de la variable 'AJCC_PATHOLOGIC_TUMOR_STAGE'
 datos$AJCC_PATHOLOGIC_TUMOR_STAGE[datos$AJCC_PATHOLOGIC_TUMOR_STAGE %in% c("STAGE I", "STAGE IA", "STAGE IB")] = "STAGE I"
 datos$AJCC_PATHOLOGIC_TUMOR_STAGE[datos$AJCC_PATHOLOGIC_TUMOR_STAGE %in% c("STAGE II", "STAGE IIA", "STAGE IIB")] = "STAGE II"
 datos$AJCC_PATHOLOGIC_TUMOR_STAGE[datos$AJCC_PATHOLOGIC_TUMOR_STAGE %in% c("STAGE III", "STAGE IIIA", "STAGE IIIB", "STAGE IIIC")] = "STAGE III"
 
-# Observar distribución de las muestras según 'MENOPAUSE_STATUS' y 'SUBTYPE'
-cat("Dimensión de la tabla de datos clínicos/metadatos ANTES de limpieza:", dim(datos), "\n") 
-cat("VERIFICACION DE LA DISTRIBUCIÓN DE LAS MUESTRAS ANTES DE LIMPIEZA:"); print(table(datos$MENOPAUSE_STATUS)); print(table(datos$MENOPAUSE_STATUS))
-
-# 1.6 Eliminar filas que correspondan a tipos de cáncer que no son de interés para el estudio por contener una cantidad de muestras insuficiente. 
+# Eliminar filas que correspondan a tipos de cáncer que no son de interés para el estudio por contener una cantidad de muestras insuficiente 
 datos = filter(datos, CANCER_TYPE_DETAILED != "Metaplastic Breast Cancer")
 datos = filter(datos, CANCER_TYPE_DETAILED != "Breast Invasive Mixed Mucinous Carcinoma")
 datos = filter(datos, CANCER_TYPE_DETAILED != "Invasive Breast Carcinoma")
 datos = filter(datos, SEX != "Male") 
 
-# 1.7. Eliminar filas con NA/vacíos en variables clave del estudio
+# Eliminar filas con NA/vacíos en variables clave del estudio
 datos = datos[!is.na(datos$SEX), ]
 datos = datos[!is.na(datos$AGE), ]
 datos = datos[!is.na(datos$MENOPAUSE_STATUS), ]
@@ -76,9 +73,5 @@ datos = datos[!is.na(datos$AJCC_PATHOLOGIC_TUMOR_STAGE), ]
 datos = datos[datos$AJCC_PATHOLOGIC_TUMOR_STAGE != "", ]
 datos = datos[!is.na(datos$SUBTYPE), ]
 datos = datos[datos$SUBTYPE != "", ]
-
-# Observar distribución de las muestras según 'MENOPAUSE_STATUS' y 'SUBTYPE'
-cat("Dimensión de la tabla de datos clínicos/metadatos DESPUÉS de limpieza:", dim(datos), "\n")
-cat("VERIFICACION DE LA DISTRIBUCIÓN DE LAS MUESTRAS DESPUÉS DE LIMPIEZA:"); print(table(datos$MENOPAUSE_STATUS)); print(table(datos$MENOPAUSE_STATUS))
 
 cat("¡Listo! Preprocesamiento de los datos clínicos/metadatos completado.\n")
