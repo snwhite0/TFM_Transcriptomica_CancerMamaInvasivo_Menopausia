@@ -38,7 +38,7 @@ metadatos_obj2$SUBTYPE = gsub("BRCA_", "", metadatos_obj2$SUBTYPE)
 
 # Generar función principal para crear los heat maps
 crear_y_guardar_heat_maps = function(genes, matriz_expr, metadatos, titulo, ruta_salida,
-                                   anotaciones_a_incluir = c("MENOPAUSE_STATUS"), ## Eliminar 'SUBTYPE' para obj1
+                                   anotaciones_a_incluir = c("MENOPAUSE_STATUS", "SUBTYPE"), # Eliminar 'SUBTYPE' para obj1
                                    cols_anno, cluster_cols = FALSE) {
   
   genes_presentes = genes[genes %in% rownames(matriz_expr)]   # Filtrar los genes presentes en la matriz de expresión
