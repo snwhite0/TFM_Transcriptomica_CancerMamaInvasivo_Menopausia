@@ -1,6 +1,6 @@
 ### Análisis de Expresión Diferencial (DEA)
-## PREPARACIÓN PREVIA 
 
+## PREPARACIÓN PREVIA 
 # Garantizar el filtrado y orden correcto de los datos de interés
 muestras_comunes = intersect(colnames(dge_tumor_filtrado_norm), pca_df_tumor$sample_id) 
 dge_tumor_filtrado_norm_2 = dge_tumor_filtrado_norm[, muestras_comunes]
@@ -31,30 +31,28 @@ metadatos$MENOPAUSE_STATUS = factor(trimws(metadatos$MENOPAUSE_STATUS),
 metadatos$SUBTYPE = factor(trimws(metadatos$SUBTYPE),
                            levels = c("BRCA_Basal", "BRCA_Her2", "BRCA_LumA", "BRCA_LumB", "BRCA_Normal"))
 
-# Verificar la distribución de los datos
+# Verificar distribución de los datos
 cat("VERIFICACION DE LA DISTRIBUCIÓN DE LAS MUESTRAS:"); print(table(metadatos$MENOPAUSE_STATUS)); print(table(metadatos$SUBTYPE))
 
+# Eliminar subtipo 'normal' del estudio por contener un número de muestras insuficiente
+metadatos = metadatos[metadatos$SUBTYPE != "BRCA_Normal", ]
+metadatos$SUBTYPE = droplevels(metadatos$SUBTYPE) # Asegurar que el factor SUBTYPE no incluye niveles vacíos
+dge = dge[, colnames(dge) %in% metadatos$sample_id]
+write.csv(dge, file.path(output_dir, "dge_sin_normal"), row.names = FALSE)
+cat(sprintf("Archivo 'dge' guardado en: %s\n", output_dir))
+write.csv(metadatos, file.path(output_dir, "metadatos_sin_normal"), row.names = FALSE)
+cat(sprintf("Archivo 'metadatos' guardado en: %s\n", output_dir))
 
-# DEA para alcanzar el Objetivo 1
 
-# 5.1.1 PREPARAR VARIABLES Y DISEÑO
-# Definir el nivel de referencia para los contrastes de menopausia
-metadatos$MENOPAUSE_STATUS = relevel(metadatos$MENOPAUSE_STATUS, ref = "Premenopausia")
+## DEA para alcanzar el Objetivo 1
+# PREPARAR VARIABLES Y DISEÑO
+metadatos$MENOPAUSE_STATUS = relevel(metadatos$MENOPAUSE_STATUS, ref = "Premenopausia") # Definir el nivel de referencia para los contrastes de menopausia
+metadatos_obj1 = metadatos # Crear copia de los metadatos para el análisis del Objetivo 1
+design_obj1 = model.matrix(~ MENOPAUSE_STATUS + SUBTYPE, data = metadatos_obj1) # Construir el modelo de diseño para el GLM sin interacciones
+dge_obj1 = estimateDisp(dge, design_obj1) # Estimar la dispersión para el modelo de GLM
+fit_obj1 = glmQLFit(dge_obj1, design_obj1) # Ajustar el modelo GLM usando la dispersión estimada
 
-# Crear copia de los metadatos para el análisis del Objetivo 1
-metadatos_obj1 = metadatos
-
-# Construir el modelo de diseño para el GLM sin interacciones
-design_obj1 = model.matrix(~ MENOPAUSE_STATUS + SUBTYPE, data = metadatos_obj1)
-
-# Estimar la dispersión para el modelo de GLM
-dge_obj1 = estimateDisp(dge, design_obj1)
-
-# Ajustar el modelo GLM usando la dispersión estimada
-fit_obj1 = glmQLFit(dge_obj1, design_obj1)
-
-# 5.1.2 DEFINIR CONTRASTES
-# Crear contrastes para comparaciones específicas de estados menopáusicos
+# DEFINIR CONTRASTES
 contrastes_obj1 = makeContrasts(
   Post_vs_Pre = MENOPAUSE_STATUSPostmenopausia,
   Post_vs_Peri = MENOPAUSE_STATUSPostmenopausia - MENOPAUSE_STATUSPerimenopausia,
@@ -62,52 +60,32 @@ contrastes_obj1 = makeContrasts(
   levels = design_obj1
 )
 
-# 5.1.3 APLICAR CONTRASTES Y FILTRAR RESULTADOS
-# Inicializar listas para almacenar resultados completos y DEGs significativos
+# APLICAR CONTRASTES Y FILTRAR RESULTADOS
 resultados_completos_obj1 = list()
 ids_genes_significativos_obj1 = list()
 
-# Definir umbrales de significancia
 p_valor_umbral = 0.05    # FDR (p-valor ajustado)
 logfc_umbral = 0.5       # Log2 Fold Change mínimo
 
-# Loop sobre cada contraste para obtener resultados y filtrar DEGs
 for (nombre_contraste in colnames(contrastes_obj1)) {
   cat(paste0("\nContraste: ", nombre_contraste))
-  
-  # Test de razón de verosimilitud para el contraste actual
-  qlf_obj1 = glmQLFTest(fit_obj1, contrast = contrastes_obj1[, nombre_contraste])
-  
-  # Obtener tabla completa de resultados ajustados por BH
-  resultados_contraste = topTags(qlf_obj1, n = Inf, adjust.method = "BH")$table
-  
-  # Guardar tabla completa
-  resultados_completos_obj1[[nombre_contraste]] = resultados_contraste
-  
-  # Filtrar genes significativos según FDR y logFC
-  genes_significativos = subset(resultados_contraste, FDR < p_valor_umbral & abs(logFC) > logfc_umbral)
-  
-  # Guardar únicamente los nombres de los genes significativos
-  ids_genes_significativos_obj1[[nombre_contraste]] = rownames(genes_significativos)
-  
-  # Mostrar resumen en consola
-  cat(paste("    Se han encontrado", nrow(genes_significativos), "DEGs\n"))
-  print(head(genes_significativos))
-}
+  qlf_obj1 = glmQLFTest(fit_obj1, contrast = contrastes_obj1[, nombre_contraste])    # Test de razón de verosimilitud para el contraste actual
+  resultados_contraste = topTags(qlf_obj1, n = Inf, adjust.method = "BH")$table      # Obtener tabla completa de resultados ajustados por BH
+  resultados_completos_obj1[[nombre_contraste]] = resultados_contraste               # Guardar tabla completa
+  genes_significativos = subset(resultados_contraste, FDR < p_valor_umbral & abs(logFC) > logfc_umbral)  # Filtrar genes significativos según FDR y logFC
+  ids_genes_significativos_obj1[[nombre_contraste]] = rownames(genes_significativos)   # Guardar únicamente los nombres de los genes significativos
 
-# 5.1.4 GUARDAR RESULTADOS EN ARCHIVOS CSV
+# GUARDAR RESULTADOS EN ARCHIVOS CSV
 dir_resultados_obj1 = "../resultados/5.DEGs_obj1_Estado_Menopausico_indep_Subtipo"
 if (!dir.exists(dir_resultados_obj1)) dir.create(dir_resultados_obj1, recursive = TRUE)
 
-# Guardar tablas completas por contraste
-for (contraste in names(resultados_completos_obj1)) {
+for (contraste in names(resultados_completos_obj1)) { # Guardar tablas completas
   archivo_csv = file.path(dir_resultados_obj1, paste0("DEGs_", contraste, ".csv"))
   write.csv(resultados_completos_obj1[[contraste]], file = archivo_csv, row.names = TRUE)
   cat("Resultados guardados en:", archivo_csv, "\n")
 }
 
-# Guardar resumen DEGs significativos por contraste
-resumen_significativos_obj1 = data.frame(
+resumen_significativos_obj1 = data.frame( # Guardar resumen DEGs significativos por contraste
   contraste = names(ids_genes_significativos_obj1),
   num_genes_significativos = sapply(ids_genes_significativos_obj1, length)
 )
@@ -116,18 +94,14 @@ archivo_resumen = file.path(dir_resultados_obj1, "Resumen_Num_Genes_Significativ
 write.csv(resumen_significativos_obj1, file = archivo_resumen, row.names = FALSE)
 cat("Resumen de DEGs guardado en:", archivo_resumen, "\n")
 
-# 5.1.5 GENERAR VOLCANO PLOTS
+# GENERAR VOLCANO PLOTS
 make_volcano = function(res_df, contraste, dir_salida, p_cutoff=0.05, logfc_cutoff=0.5) {
-  
-  # Clasificación de genes según significancia
   res_df$significance = "NS"
   res_df$significance[res_df$FDR < p_cutoff & res_df$logFC > logfc_cutoff] = "Up"
   res_df$significance[res_df$FDR < p_cutoff & res_df$logFC < -logfc_cutoff] = "Down"
   
-  # Seleccionar top 15 genes para etiquetar en el plot
   top_genes = rownames(head(res_df[order(res_df$FDR), ], 15))
   
-  # Crear volcano plot con ggplot2
   p = ggplot(res_df, aes(x=logFC, y=-log10(FDR), color=significance)) +
     geom_point(alpha=0.7, size=1.5) +
     scale_color_manual(values=c("Down"="blue", "Up"="red", "NS"="grey")) +
@@ -139,44 +113,30 @@ make_volcano = function(res_df, contraste, dir_salida, p_cutoff=0.05, logfc_cuto
          x="log2 Fold Change", y="-log10(FDR)") +
     theme(legend.position="right")
   
-  # Guardar plot en PDF
   ggsave(filename=file.path(dir_salida, paste0("Volcano_", contraste, ".pdf")),
          plot=p, width=7, height=6)
 }
 
-# Crear directorio para guardar los volcano plots
 dir_volcanos_obj1 = file.path(dir_resultados_obj1, "volcano_plots")
 if (!dir.exists(dir_volcanos_obj1)) dir.create(dir_volcanos_obj1)
 
-# Generar volcano plots para cada contraste
-for (contraste in names(resultados_completos_obj1)) {
+for (contraste in names(resultados_completos_obj1)) { 
   res_df = resultados_completos_obj1[[contraste]]
   make_volcano(res_df, contraste, dir_volcanos_obj1, p_valor_umbral, logfc_umbral)
 }
 
-cat("Volcano plots OBJ1 guardados en:", dir_volcanos_obj1, "\n")
-cat("¡Listo! DEA obj1 completado con éxito.\n")
 
-# DEA para alcanzar el Objetivo 2
-
-# 5.2.1 PREPARAR VARIABLES Y DISEÑO
-# Crear copia de los metadatos para el análisis del Objetivo 2
+## DEA para alcanzar el Objetivo 2
+# PREPARAR VARIABLES Y DISEÑO
 metadatos_obj2 = metadatos
-
-# Construir el modelo de diseño para el GLM sin interacciones
 design_obj2 = model.matrix(~ 0 + MENOPAUSE_STATUS:SUBTYPE, data = metadatos_obj2)
 colnames(design_obj2) = gsub("MENOPAUSE_STATUS", "", colnames(design_obj2))
 colnames(design_obj2) = gsub(":", "_", colnames(design_obj2))
 colnames(design_obj2) = gsub("_SUBTYPEBRCA_", "_", colnames(design_obj2))
-
-# Estimar la dispersión para el modelo de GLM
 dge_obj2 = estimateDisp(dge, design_obj2)
-
-# Ajustar el modelo GLM usando la dispersión estimada
 fit_obj2 = glmQLFit(dge_obj2, design_obj2)
 
-# 5.2.2 DEFINIR CONTRASTES
-# Crear contrastes para comparaciones de estados menopáusicos dentro de cada subtipo
+# DEFINIR CONTRASTES
 contrastes_obj2 = makeContrasts(
   LumA_Post_vs_Pre  = Postmenopausia_LumA - Premenopausia_LumA,
   LumA_Post_vs_Peri = Postmenopausia_LumA - Perimenopausia_LumA,
@@ -197,47 +157,24 @@ contrastes_obj2 = makeContrasts(
   levels = design_obj2
 )
 
-# 5.2.3 APLICAR CONTRASTES Y FILTRAR RESULTADOS
-# Inicializar listas para almacenar resultados completos y DEGs significativos
+# APLICAR CONTRASTES Y FILTRAR RESULTADOS
 resultados_completos_obj2 = list()
 ids_genes_significativos_obj2 = list()
 
-# Definir umbrales de significancia
-p_valor_umbral = 0.05    # FDR (p-valor ajustado)
-logfc_umbral = 0.5       # Log2 Fold Change mínimo
-
-# Loop sobre cada contraste para obtener resultados y filtrar DEGs
 for (nombre_contraste in colnames(contrastes_obj2)) {
   cat(paste0("\nContraste: ", nombre_contraste))
-  
-  # Test de razón de verosimilitud para el contraste actual
   qlf_obj2 = glmQLFTest(fit_obj2, contrast = contrastes_obj2[, nombre_contraste])
-  
-  # Obtener tabla completa de resultados ajustados por BH
   resultados_contraste_obj2 = topTags(qlf_obj2, n = Inf, sort.by = "PValue", adjust.method = "BH", p.value = 1)
-  
-  # Convertir a data.frame
   df_res_obj2 = as.data.frame(resultados_contraste_obj2$table)
-  
-  # Filtrar DEGs significativos según FDR y logFC
-  genes_signif_obj2 = df_res_obj2 %>%
-    filter(FDR < p_valor_umbral, abs(logFC) > logfc_umbral)
-  
-  # Guardar resultados completos y nombres de genes significativos
+  genes_signif_obj2 = df_res_obj2 %>% filter(FDR < p_valor_umbral, abs(logFC) > logfc_umbral)
   resultados_completos_obj2[[nombre_contraste]] = df_res_obj2
   ids_genes_significativos_obj2[[nombre_contraste]] = rownames(genes_signif_obj2)
-  
-  # Mostrar resumen en consola
-  cat(paste("    Se han encontrado", nrow(genes_signif_obj2), "DEGs\n"))
-  print(head(genes_signif_obj2))
-}
 
-# 5.2.4 GUARDAR RESULTADOS EN ARCHIVOS CSV
+# GUARDAR RESULTADOS EN ARCHIVOS CSV
 dir_resultados_obj2 = "../resultados/5.DEGs_obj2_Estado_Menopausico_x_Subtipo"
 if (!dir.exists(dir_resultados_obj2)) dir.create(dir_resultados_obj2, recursive = TRUE)
 
-# Guardar tablas completas por contraste
-for (contraste in names(resultados_completos_obj2)) {
+for (contraste in names(resultados_completos_obj2)) { 
   archivo_csv = file.path(dir_resultados_obj2, paste0("DEGs_", contraste, ".csv"))
   write.csv(resultados_completos_obj2[[contraste]], file = archivo_csv, row.names = TRUE)
   cat("Resultados guardados en:", archivo_csv, "\n")
@@ -253,16 +190,11 @@ archivo_resumen2 = file.path(dir_resultados_obj2, "Resumen_Num_Genes_Significati
 write.csv(resumen_significativos_obj2, file = archivo_resumen2, row.names = FALSE)
 cat("Resumen de DEGs guardado en:", archivo_resumen2, "\n")
 
-# 5.2.5 GENERAR VOLCANO PLOTS
-# Crear directorio para guardar los volcano plots
+# GENERAR VOLCANO PLOTS
 dir_volcanos_obj2 = file.path(dir_resultados_obj2, "volcano_plots")
 if (!dir.exists(dir_volcanos_obj2)) dir.create(dir_volcanos_obj2)
 
-# Generar volcano plots para cada contraste de cada subtipo
 for (contraste in names(resultados_completos_obj2)) {
   res_df = resultados_completos_obj2[[contraste]]
   make_volcano(res_df, contraste, dir_volcanos_obj2, p_valor_umbral, logfc_umbral)
 }
-
-cat("Volcano plots OBJ2 guardados en:", dir_volcanos_obj2, "\n")
-cat("¡Listo! DEA obj2 completado con éxito.\n")
