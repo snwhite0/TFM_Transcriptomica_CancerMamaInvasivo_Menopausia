@@ -1,12 +1,10 @@
 ### Fuente de datos
-
 Este proyecto utiliza datos del **TCGA PanCancer Atlas (2018)** disponibles en cBioPortal.
 Puedes descargar el conjunto completo desde el siguiente enlace:
 
-➡️ [brca\_tcga\_pan\_can\_atlas\_2018.tar.gz](https://cbioportal-datahub.s3.amazonaws.com/brca_tcga_pan_can_atlas_2018.tar.gz)
+➡️ [brca_tcga_pan_can_atlas_2018.tar.gz](https://cbioportal-datahub.s3.amazonaws.com/brca_tcga_pan_can_atlas_2018.tar.gz)
 
 ### Archivos empleados en los análisis
-
 * `data_clinical_patient.txt` → Información clínica a nivel de paciente.
 * `data_clinical_sample.txt` → Información clínica a nivel de muestra.
 * `data_mrna_seq_v2_rsem.txt` → Datos de expresión génica (RNA-seq).
