@@ -109,6 +109,3 @@ for (var in names(variables)) {
     crear_y_guardar_pca_plot(pca_df_tumor, pcs[1], pcs[2], var, pca_resultado_tumor, titulo, filename)
   }
 }
-
-ggsave(filename = file.path(pca_plots_dir, "pca_sexo.pdf"), plot = pca_plot_sexo, width = 6, height = 8, units = "in", dpi = 300)
-
