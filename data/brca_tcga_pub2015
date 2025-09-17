@@ -1,11 +1,9 @@
 ### Fuente de datos
-
 Este proyecto utiliza además los metadatos del **TCGA Breast Cancer (2015, TCGA\_pub)** disponibles en cBioPortal, con el objetivo de complementar las anotaciones clínicas y de muestra del estudio de 2018. 
 Puedes descargar el conjunto completo desde el siguiente enlace:
 
-➡️ [brca\_tcga\_pub2015.tar.gz](https://cbioportal-datahub.s3.amazonaws.com/brca_tcga_pub2015.tar.gz)
+➡️ [brca_tcga_pub2015.tar.gz](https://cbioportal-datahub.s3.amazonaws.com/brca_tcga_pub2015.tar.gz)
 
 ### Archivos empleados en los análisis
-
 * `data_clinical_patient.txt` → Información clínica a nivel de paciente.
 * `data_clinical_sample.txt` → Información clínica a nivel de muestra.
