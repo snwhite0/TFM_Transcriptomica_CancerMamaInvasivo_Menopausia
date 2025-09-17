@@ -3,6 +3,8 @@
 ## Configuración inicial
 outdir_supervivencia = "../resultados/10.Analisis_Supervivencia/obj1"
 dir.create(outdir_supervivencia, recursive = TRUE, showWarnings = FALSE)
+outdir_supervivencia = "../resultados/10.Analisis_Supervivencia/obj2"
+dir.create(outdir_supervivencia, recursive = TRUE, showWarnings = FALSE)
 
 # Preparación de metadatos
 # - Crear variables binarias de eventos de supervivencia:
@@ -18,6 +20,13 @@ metadatos_obj1$DFS_EVENT = ifelse(metadatos_obj1$DFS_STATUS == "", NA,
                             ifelse(substr(metadatos_obj1$DFS_STATUS,1,1)=="1",1,0))
 metadatos_obj1$PFS_EVENT = ifelse(substr(metadatos_obj1$PFS_STATUS, 1, 1) == "1", 1, 0) 
 
+metadatos_obj2$OS_EVENT = ifelse(substr(metadatos_obj2$OS_STATUS, 1, 1) == "1", 1, 0) 
+metadatos_obj2$DSS_EVENT = ifelse(metadatos_obj2$DSS_STATUS == "", NA,
+                            ifelse(substr(metadatos_obj2$DFS_STATUS,1,1)=="1",1,0)) 
+metadatos_obj2$DFS_EVENT = ifelse(metadatos_obj2$DFS_STATUS == "", NA,
+                            ifelse(substr(metadatos_obj2$DFS_STATUS,1,1)=="1",1,0)) 
+metadatos_obj2$PFS_EVENT = ifelse(substr(metadatos_obj2$PFS_STATUS, 1, 1) == "1", 1, 0) 
+
 # Definir lista de tipos de supervivencia con columnas de tiempo y evento
 supervivencias = list(
   OS  = list(time = "OS_MONTHS",  event = "OS_EVENT"),
@@ -26,9 +35,11 @@ supervivencias = list(
   PFS = list(time = "PFS_MONTHS", event = "PFS_EVENT")
 )
 
-# Obtener listado de DEGs a analizar a partir de los boxplots de Obj1
+# Obtener listado de DEGs a analizar a partir de los boxplots de Obj1/2
 genes_listado = obtener_genes_boxplots(ruta_boxplots_obj1)
 genes_a_analizar_superv_obj1 = unique(unlist(genes_listado))
+genes_listado = obtener_genes_boxplots(ruta_boxplots_obj2)
+genes_a_analizar_superv_obj2 = unique(unlist(genes_listado))
 
 # Generar función de análisis de supervivencia Kaplan-Meier por mediana
 analisis_supervivencia = function(df, time_col, event_col, gen_expr_col, tipo, carpeta, subtitulo="") {
@@ -90,7 +101,7 @@ resumen_final_obj1 = list()
 for (gen in genes_a_analizar_superv_obj1) {
   if (!gen %in% rownames(logCPM_obj1)) next
   
-  # Guardar datos expresión en los metadatos
+  # Guardar datos de expresión en los metadatos
   metadatos_obj1[[paste0(gen,"_expr")]] = logCPM_obj1[gen, match(metadatos_obj1$sample_id, colnames(logCPM_obj1))]
   
   carpeta_gen = file.path(outdir_supervivencia, gen)
@@ -128,45 +139,15 @@ for (gen in genes_a_analizar_superv_obj1) {
             row.names=FALSE)
 }
 
-cat("¡Listo! Análisis de Supervivencia completado para los DEGs significativos del objetivo 1.\n")
-cat("Los resultados están guardados en subcarpetas dentro de:\n", outdir_supervivencia, "\n")
 
-## Ejecución deL análisis de supervivencia para los resultados significativos del Objetivo 1
-# 10.2.1 Configuración inicial
-
-# Crear directorio principal para guardar los resultados
-outdir_supervivencia = "../resultados/10.Analisis_Supervivencia/obj2"
-dir.create(outdir_supervivencia, recursive = TRUE, showWarnings = FALSE)
-
-# Preparación de metadatos
-# - Crear variables binarias de eventos de supervivencia:
-#     · OS_EVENT: Overall Survival (1=deceased, 0=alive)
-#     · DSS_EVENT: Disease-Specific Survival (1=dead with tumor, 0=alive/tumor-free)
-#     · DFS_EVENT: Disease-Free Survival (1=recurred/progressed, 0=disease-free)
-#     · PFS_EVENT: Progression-Free Survival (1=progression, 0=censored)
-
-metadatos_obj2$OS_EVENT = ifelse(substr(metadatos_obj2$OS_STATUS, 1, 1) == "1", 1, 0) 
-metadatos_obj2$DSS_EVENT = ifelse(metadatos_obj2$DSS_STATUS == "", NA,
-                            ifelse(substr(metadatos_obj2$DFS_STATUS,1,1)=="1",1,0)) 
-metadatos_obj2$DFS_EVENT = ifelse(metadatos_obj2$DFS_STATUS == "", NA,
-                            ifelse(substr(metadatos_obj2$DFS_STATUS,1,1)=="1",1,0)) 
-metadatos_obj2$PFS_EVENT = ifelse(substr(metadatos_obj2$PFS_STATUS, 1, 1) == "1", 1, 0) 
-
-# Obtener listado de DEGs a analizar a partir de los boxplots de Obj2
-genes_listado = obtener_genes_boxplots(ruta_boxplots_obj2)
-genes_a_analizar_superv_obj2 = unique(unlist(genes_listado))
-
-# 10.2.2 Función de análisis de supervivencia Kaplan-Meier por mediana
-## EJECUTADA PREVIAMENTE PARA EL OBJETIVO 1 
-
-# 10.2.3 Ejecución del análisis para todos los DEGs de Obj2
+## Ejecución deL análisis de supervivencia para los resultados significativos del Objetivo 2
 resumen_final_obj2 = list()
 
 # Iterar sobre cada gen significativo
 for (gen in genes_a_analizar_superv_obj2) {
   if (!gen %in% rownames(logCPM_obj2)) next
   
-  # Guardar datos expresión en los metadatos
+  # Guardar datos de expresión en los metadatos
   metadatos_obj2[[paste0(gen,"_expr")]] = logCPM_obj2[gen, match(metadatos_obj2$sample_id, colnames(logCPM_obj2))]
   
   carpeta_gen = file.path(outdir_supervivencia, gen)
@@ -220,7 +201,3 @@ for (gen in genes_a_analizar_superv_obj2) {
             file.path(carpeta_gen, sprintf("resumen_supervivencia_%s.csv", gen)),
             row.names=FALSE)
 }
-
-cat("¡Listo! Análisis de Supervivencia completado para los DEGs significativos del objetivo 2.\n")
-cat("Todos los resultados están guardados en subcarpetas dentro de:\n", outdir_supervivencia, "\n")
-
