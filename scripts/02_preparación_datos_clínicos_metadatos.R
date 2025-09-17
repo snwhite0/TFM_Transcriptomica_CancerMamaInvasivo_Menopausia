@@ -62,6 +62,7 @@ datos$AJCC_PATHOLOGIC_TUMOR_STAGE[datos$AJCC_PATHOLOGIC_TUMOR_STAGE %in% c("STAG
 datos = filter(datos, CANCER_TYPE_DETAILED != "Metaplastic Breast Cancer")
 datos = filter(datos, CANCER_TYPE_DETAILED != "Breast Invasive Mixed Mucinous Carcinoma")
 datos = filter(datos, CANCER_TYPE_DETAILED != "Invasive Breast Carcinoma")
+# Eliminar filas que correspondan a muestras del sexo masculino
 datos = filter(datos, SEX != "Male") 
 
 # Eliminar filas con NA/vacíos en variables clave del estudio
