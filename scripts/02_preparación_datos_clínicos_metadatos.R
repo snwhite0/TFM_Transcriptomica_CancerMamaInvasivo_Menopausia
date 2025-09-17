@@ -73,5 +73,3 @@ datos = datos[!is.na(datos$AJCC_PATHOLOGIC_TUMOR_STAGE), ]
 datos = datos[datos$AJCC_PATHOLOGIC_TUMOR_STAGE != "", ]
 datos = datos[!is.na(datos$SUBTYPE), ]
 datos = datos[datos$SUBTYPE != "", ]
-
-cat("¡Listo! Preprocesamiento de los datos clínicos/metadatos completado.\n")
