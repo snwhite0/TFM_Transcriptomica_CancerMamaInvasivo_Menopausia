@@ -1,10 +1,13 @@
 ### Upset Plots
+
+## Configuración inicial
 resultados_dir = "../resultados/6.Superposicion_DEGs"
 upset_plots_dir = file.path(resultados_dir, "upset_plots")
 
 if (!dir.exists(upset_plots_dir)) {
   dir.create(upset_plots_dir, recursive = TRUE)
 }
+
 
 ## Upset Plots para los resultados del DEA de cada objetivo (total = 2)
 # Crear función para generar y guardar los plots
@@ -53,6 +56,7 @@ crear_y_guardar_upset_plot = function(lista_genes_significativos, nombre_objetiv
 # Ejecutar función para cada objetivo
 cat("Upset Plot: DEGs Compartidos y Específicos en Obj1"); crear_y_guardar_upset_plot(ids_genes_significativos_obj1, "obj1")
 cat("Upset Plot: DEGs Compartidos y Específicos en Obj2"); crear_y_guardar_upset_plot(ids_genes_significativos_obj2, "obj2")
+
 
 ## Upset Plots para los resultados del DEA por subtipo molecular del objetivo 2 (total = 4)
 target_subtypes = c("Basal", "Her2","LumA", "LumB")
