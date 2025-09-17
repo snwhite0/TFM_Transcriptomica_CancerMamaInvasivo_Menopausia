@@ -179,7 +179,7 @@ ejec_enrichr_ora = function(gene_list,
 }                            
 
 
-## Ejecución del para los resultados significativos del Objetivo 1
+## Ejecución del ORA para los resultados significativos del Objetivo 1
 # - Se extraen los genes asociados a cada subcarpeta de boxplots
 # - Para cada lista de genes con tamaño >= min_genes_ora:
 #       · Se prepara un nombre corto de análisis
@@ -205,7 +205,7 @@ for (nombre_lista in names(lista_genes_obj1)) {
 }
 
 
-## Ejecución del para los resultados significativos del Objetivo 2
+## Ejecución del ORA para los resultados significativos del Objetivo 2
 # - Proceso equivalente al de Obj1, pero aplicado a las listas de genes obtenidas de los boxplots de Obj2
 
 lista_genes_obj2 = obtener_genes_boxplots(ruta_boxplots_obj2)
