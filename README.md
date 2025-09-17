@@ -32,7 +32,7 @@ Analizar la expresión diferencial por estado menopáusico en cada subtipo molec
 
 ## Requisitos
 - R >= 4.2  
-- Paquetes: `edgeR`, `enrichR`, `ggplot2`, `dplyr`, `stringr`, `survival`, `survminer`, `readr`  
+- Paquetes: `edgeR`, `enrichR`, `ggplot2`, `dplyr`, `stringr`, `survival`, `survminer`, `readr` ...  
 - Otros paquetes de tidyverse según scripts
   
 ## Uso
@@ -45,8 +45,7 @@ Analizar la expresión diferencial por estado menopáusico en cada subtipo molec
 3. Los resultados se guardan en subcarpetas dentro de `resultados/`.
 
 ## Estructura del repositorio
+├── TFM_script_definitivo.html # Archivo HTML con el código completo
 ├── scripts/ # Scripts de R por tipo de análisis
-
 ├── data/ # Datos de entrada (raw data)
-
 ├── README.md # Este archivo
