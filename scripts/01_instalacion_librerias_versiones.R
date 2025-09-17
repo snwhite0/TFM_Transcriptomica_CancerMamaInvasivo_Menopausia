@@ -26,7 +26,6 @@ paquetes_bioc = c("edgeR", "limma", "topGO", "AnnotationDbi", "org.Hs.eg.db", "G
 # Instalar paquetes si faltan
 invisible(sapply(paquetes_cran, instalar_si_falta))
 invisible(sapply(paquetes_bioc, instalar_bioconductor_si_falta))
-cat("¡Listo! Las librerías necesarias han sido instaladas y cargadas correctamente.\n")
 
 # Cargar paquetes silenciosamente
 suppressPackageStartupMessages({
