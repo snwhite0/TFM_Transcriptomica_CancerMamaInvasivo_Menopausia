@@ -56,5 +56,3 @@ df_otros = info_paquetes(c("grid", "gridExtra"), "Base/Extra")
 df_total = rbind(df_cran, df_bioc, df_otros) # Combinar todo
 
 write.csv(df_total, file = "versiones_paquetes_cargados.csv", row.names = FALSE)
-cat("Se ha generado el archivo 'versiones_paquetes_cargados.csv'.\n")
-    
