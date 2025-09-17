@@ -1,6 +1,6 @@
+### Instalación de librerías/paquetes
 # Paquetes CRAN
 paquetes_cran = c("data.table", "tidyverse", "viridis", "ggrepel","UpSetR", "pheatmap", "RColorBrewer", "enrichR", "survival")
-
 # Paquetes Bioconductor
 paquetes_bioc = c("edgeR", "limma", "topGO", "AnnotationDbi", "org.Hs.eg.db", "GO.db", "Rgraphviz", "dorothea", "viper")
 
@@ -10,7 +10,6 @@ instalar_si_falta = function(libreria) {
     install.packages(libreria)
   }
 }
-
 # Función para instalar paquetes Bioconductor si faltan
 instalar_bioconductor_si_falta = function(libreria) {
   if (!requireNamespace("BiocManager", quietly = TRUE)) {
@@ -35,6 +34,7 @@ suppressPackageStartupMessages({
   })
 })
 
+### Registro de versiones de paquetes y librerías instalados
 # Función para obtener versiones y origen
 info_paquetes = function(lista, origen) {
   data.frame(
@@ -45,7 +45,7 @@ info_paquetes = function(lista, origen) {
   )
 }
 
-# Generar tabla con versiones y guardar
+# Generar tabla con versiones y guardar en archivo CSV
 df_cran = info_paquetes(paquetes_cran, "CRAN")
 df_bioc = info_paquetes(paquetes_bioc, "Bioconductor")
 df_otros = info_paquetes(c("grid", "gridExtra"), "Base/Extra")
