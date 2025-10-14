@@ -99,7 +99,12 @@ make_volcano = function(res_df, contraste, dir_salida, p_cutoff=0.05, logfc_cuto
   res_df$significance = "NS"
   res_df$significance[res_df$FDR < p_cutoff & res_df$logFC > logfc_cutoff] = "Up"
   res_df$significance[res_df$FDR < p_cutoff & res_df$logFC < -logfc_cutoff] = "Down"
-  
+
+  ### Filtrar solo genes que cumplen ambos criterios
+  ### sig_df = subset(res_df, FDR < p_cutoff & abs(logFC) > logfc_cutoff)
+
+  # Seleccionar los 15 genes con menor FDR dentro de los significativos
+  ### top_genes = rownames(head(sig_df[order(sig_df$FDR), ], n_labels))
   top_genes = rownames(head(res_df[order(res_df$FDR), ], 15))
   
   p = ggplot(res_df, aes(x=logFC, y=-log10(FDR), color=significance)) +
